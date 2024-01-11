@@ -12,7 +12,9 @@ class ChirpController extends Controller
      */
     public function index()
     {
-        //
+        return view('chirps.index', [
+            'chirps' => Chirp::latest()->get()
+        ]);
     }
 
     /**
@@ -28,7 +30,21 @@ class ChirpController extends Controller
      */
     public function store(Request $request)
     {
-        //
+ 
+        // Validate data
+        $validated = $request->validate([
+            'message' => ['required', 'min:3', 'max:255']
+        ]);
+
+        // Insert to database
+        /*$request->user()->chirps()->create([
+            'message' => $request->get('message'),
+        ]);
+        */
+        $request->user()->chirps()->create($validated); // opcion 2 de instersion a DB
+        
+        return to_route('chirps.index')
+            ->with('status', __('Chirp created successfully!'));
     }
 
     /**
@@ -43,8 +59,14 @@ class ChirpController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Chirp $chirp)
-    {
-        //
+    {   
+        // Candado para que solo los creadores del chirp puedan editar
+            //if(auth()->user()->isNot($chirp->user)){abort(403);}
+        $this->authorize('update', $chirp);
+
+        return view('chirps.edit',[
+            'chirp' => $chirp
+        ]);
     }
 
     /**
@@ -52,7 +74,19 @@ class ChirpController extends Controller
      */
     public function update(Request $request, Chirp $chirp)
     {
-        //
+        // Candado para que solo los creadores del chirp puedan editar
+            //if(auth()->user()->isNot($chirp->user)){abort(403);}
+        $this->authorize('update', $chirp);
+        
+        // Validate data
+        $validated = $request->validate([
+            'message' => ['required', 'min:3', 'max:255']
+        ]);
+
+        $chirp->update($validated);
+        
+        return to_route('chirps.index')
+            ->with('status', __('Chirp updated successfully!'));
     }
 
     /**
@@ -60,6 +94,13 @@ class ChirpController extends Controller
      */
     public function destroy(Chirp $chirp)
     {
-        //
+        // Candado para que solo los creadores del chirp puedan editar
+            //if(auth()->user()->isNot($chirp->user)){abort(403);}
+        $this->authorize('update', $chirp);
+
+        $chirp->delete();
+        
+        return to_route('chirps.index')
+            ->with('status', __('Chirp deleted successfully!'));
     }
 }
